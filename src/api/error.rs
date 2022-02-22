@@ -1,5 +1,7 @@
 use std::time::Duration;
+
 use reqwest::StatusCode;
+use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -7,7 +9,7 @@ pub enum HypixelApiError {
     #[error("Could not parse {0} into integer")]
     IntFromStrError(String),
     #[error("Unexpected response code received: {0}")]
-    UnexpectedResponseCode(StatusCode),
+    UnexpectedResponseCode(StatusCode, Option<ErrorReply>),
     #[error("Error from reqwest!")]
     Reqwest {
         #[from]
@@ -23,4 +25,10 @@ pub enum HypixelApiError {
         #[from]
         source: tokio::sync::watch::error::RecvError,
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ErrorReply {
+    success: bool,
+    cause: String,
 }

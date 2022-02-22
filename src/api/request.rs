@@ -9,6 +9,7 @@ use tokio::task::JoinHandle;
 use uuid::Uuid;
 use crate::api::error::HypixelApiError;
 use crate::api::throttler::RequestThrottler;
+use crate::error::ErrorReply;
 
 #[derive(Debug)]
 pub struct RequestHandler {
@@ -122,13 +123,23 @@ impl RequestHandler {
         let headers = response.headers();
         let time_before_reset = get_from_headers(headers, "ratelimit-reset", 10)?.max(1);
         let requests_remaining = get_from_headers(headers, "ratelimit-remaining", 110)?.max(1);
-        if {
+        let result_check = {
             let mut throttler = throttler.lock();
             throttler.on_received(status_code, time_before_reset, requests_remaining)
-        }? {
-            Ok(Some(response))
-        } else {
-            Ok(None)
+        };
+        match result_check {
+            Ok(result) => {
+                if result {
+                    Ok(Some(response))
+                } else {
+                    Ok(None)
+                }
+            }
+            Err(HypixelApiError::UnexpectedResponseCode(code, _)) => {
+                let cause = response.json::<ErrorReply>().await.ok();
+                Err(HypixelApiError::UnexpectedResponseCode(code, cause))
+            }
+            Err(error) => Err(error)
         }
     }
 }

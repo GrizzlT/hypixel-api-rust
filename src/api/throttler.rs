@@ -70,7 +70,7 @@ impl RequestThrottler {
                 }
                 Ok(true)
             }
-            code => return Err(HypixelApiError::UnexpectedResponseCode(code)),
+            code => return Err(HypixelApiError::UnexpectedResponseCode(code, None)),
         }
     }
 
