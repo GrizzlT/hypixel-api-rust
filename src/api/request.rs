@@ -7,9 +7,10 @@ use reqwest::header::{AsHeaderName, HeaderMap};
 use serde::de::DeserializeOwned;
 use tokio::task::JoinHandle;
 use uuid::Uuid;
-use crate::api::errors::HypixelApiError;
+use crate::api::error::HypixelApiError;
 use crate::api::throttler::RequestThrottler;
 
+#[derive(Debug)]
 pub struct RequestHandler {
     client: Client,
     api_key: Uuid,
@@ -17,6 +18,28 @@ pub struct RequestHandler {
 }
 
 impl RequestHandler {
+    /// Creates a new RequestHandler instance using an
+    /// [api_key](https://api.hypixel.net/#section/Authentication)
+    /// obtained from Hypixel.
+    ///
+    /// [`RequestHandler::request`] can be used to queue as many
+    /// requests as required for execution without ever going over
+    /// the limit set by Hypixel's API. This limit is derived
+    /// automatically and thus can be completely avoided by user code.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use hypixel_api::RequestHandler;
+    /// # use uuid::Uuid;
+    /// # use std::str::FromStr;
+    ///
+    /// # fn main() {
+    /// let api_key = Uuid::from_str(env!("HYPIXEL_API_KEY")).unwrap();
+    /// let request_handler = RequestHandler::new(api_key);
+    ///
+    /// // Send requests ...
+    /// # }
+    /// ```
     pub fn new(api_key: Uuid) -> Self {
         RequestHandler {
             client: Client::new(),
@@ -25,7 +48,35 @@ impl RequestHandler {
         }
     }
 
-    /// Call this function from an async context!
+    /// Queues a new request for execution and returns a [`JoinHandle`] to it.
+    ///
+    /// ## Arguments
+    /// `path` should be a relative path to the API (without leading `/`), such as `"key"`
+    /// or `"status?uuid=..."`. See the [API](https://api.hypixel.net/).
+    ///
+    /// # Errors
+    ///
+    /// If any part of the execution process fails, a [`HypixelApiError`] will be returned.
+    ///
+    /// # Examples
+    /// ```rust,no_run
+    /// # use uuid::Uuid;
+    /// # use std::str::FromStr;
+    /// # use hypixel_api::StatusReply;
+    /// use hypixel_api::RequestHandler;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let api_key = Uuid::from_str(env!("HYPIXEL_API_KEY")).unwrap();
+    /// let request_handler = RequestHandler::new(api_key);
+    /// let request1 = request_handler.request::<StatusReply>("status?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5");
+    ///
+    /// // send more requests ...
+    ///
+    /// let reply: StatusReply = request1.await.unwrap().unwrap();
+    /// // use reply ...
+    /// # }
+    /// ```
     #[tracing::instrument(name = "queue_req", skip(self))]
     pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> JoinHandle<Result<T, HypixelApiError>> {
         let url = format!("https://api.hypixel.net/{}", path);

@@ -1,5 +1,5 @@
 pub(crate) mod throttler;
 pub mod reply;
-pub mod request;
-pub mod errors;
+pub(crate) mod request;
+pub mod error;
 mod tests;

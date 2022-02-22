@@ -1,4 +1,6 @@
-#![allow(dead_code)]
+//! This module provides some examples of
+//! data structures that link to repsonses from
+//! Hypixel's Public API.
 
 use chrono::serde::ts_milliseconds_option::deserialize as from_milli_ts;
 use chrono::{DateTime, Utc};

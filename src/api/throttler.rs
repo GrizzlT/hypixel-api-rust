@@ -5,8 +5,9 @@ use reqwest::StatusCode;
 use tokio::runtime;
 use tokio::sync::{mpsc, watch};
 use tokio::time::{sleep, Instant};
-use crate::api::errors::HypixelApiError;
+use crate::api::error::HypixelApiError;
 
+#[derive(Debug)]
 pub struct RequestThrottler {
     requests_left: u32,
     received_first: bool,
