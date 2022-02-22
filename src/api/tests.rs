@@ -1,12 +1,13 @@
 #![cfg(test)]
 
+use std::error::Error;
 use std::str::FromStr;
 use std::time::Duration;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use uuid::Uuid;
 use crate::api::reply::{PlayerData, StatusData};
-use crate::{KeyReply, RequestHandler};
+use crate::{KeyReply, PlayerReply, RequestHandler};
 
 #[test]
 fn test_player() {
@@ -68,4 +69,18 @@ fn test_bulk() {
                 println!("Player data #{}: {:?}", i, reply);
             }
         });
+}
+
+#[test]
+fn test_bed_bed() {
+    tokio::runtime::Runtime::new().unwrap()
+        .block_on(async move {
+            let request_handler = RequestHandler::new(Uuid::from_str(env!("HYPIXEL_KEY")).unwrap());
+
+            let reply = request_handler.request::<PlayerReply>("player?uuid=232b2c37-4d68-4086-a7ce-67d0cadcc7f9").await.unwrap();
+            match reply {
+                Ok(reply) => println!("Response: {:?}", reply),
+                Err(error) => println!("Encoutered error: {}, source: {:?}", error, error.source()),
+            }
+        })
 }

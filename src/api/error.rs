@@ -8,7 +8,7 @@ use thiserror::Error;
 pub enum HypixelApiError {
     #[error("Could not parse {0} into integer")]
     IntFromStrError(String),
-    #[error("Unexpected response code received: {0}")]
+    #[error("Unexpected response code received: {0}, {1:?}")]
     UnexpectedResponseCode(StatusCode, Option<ErrorReply>),
     #[error("Error from reqwest!")]
     Reqwest {
@@ -27,8 +27,18 @@ pub enum HypixelApiError {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct ErrorReply {
     success: bool,
     cause: String,
+}
+
+impl ErrorReply {
+    pub fn success(&self) -> bool {
+        self.success
+    }
+
+    pub fn cause(&self) -> &str {
+        &self.cause
+    }
 }

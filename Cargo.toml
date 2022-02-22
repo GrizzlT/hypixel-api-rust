@@ -24,3 +24,6 @@ thiserror = "1.0.30"
 
 [features]
 default = []
+
+[package.metadata.docs.rs]
+rustdoc-args = [ "--html-in-header", "./src/docs-header.html" ]
