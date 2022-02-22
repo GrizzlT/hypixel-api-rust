@@ -26,6 +26,7 @@ impl RequestHandler {
     }
 
     /// Call this function from an async context!
+    #[tracing::instrument(name = "queue_req", skip(self))]
     pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> JoinHandle<Result<T>> {
         let url = format!("https://api.hypixel.net/{}", path);
         let api_key = self.api_key.to_hyphenated().to_string();
@@ -42,6 +43,7 @@ impl RequestHandler {
         })
     }
 
+    #[tracing::instrument(name = "try_send", level = "trace", skip_all)]
     async fn try_request(client: Client, url: String, api_key: String, throttler: Arc<Mutex<RequestThrottler>>) -> Result<Option<Response>> {
         let mut watcher = None;
         loop {

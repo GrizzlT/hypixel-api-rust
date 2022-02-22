@@ -48,11 +48,11 @@ impl RequestThrottler {
         (allow_pass, self.notify_rx.clone())
     }
 
+    #[tracing::instrument(skip(self))]
     pub fn on_received(&mut self, status_code: StatusCode, time_before_reset: u64, requests_remaining: u32) -> Result<bool> {
         match status_code {
             StatusCode::TOO_MANY_REQUESTS => {
-                println!("Too many requests!");
-                println!("Vars: {}, {}", time_before_reset, requests_remaining);
+                warn!("Too many requests response!");
                 if !self.overflow_flagged {
                     self.overflow_flagged = true;
                     self.requests_left = 0;
@@ -73,6 +73,7 @@ impl RequestThrottler {
         }
     }
 
+    #[tracing::instrument(name = "timer_thread", skip_all)]
     async fn start_waiting(throttler: Arc<Mutex<RequestThrottler>>, wait_tx: watch::Sender<()>, mut time_rx: mpsc::Receiver<Option<Duration>>) {
         let sleeper = sleep(Duration::from_millis(10));
         tokio::pin!(sleeper);
@@ -88,7 +89,7 @@ impl RequestThrottler {
                         throttler.requests_left = 1;
                     }
                     if let Err(error) = wait_tx.send(()) {
-                        println!("Error while sending! {}", error);
+                        error!(%error, "Error while sending wake up!");
                     }
                 }
                 duration = time_rx.recv() => {
@@ -101,7 +102,7 @@ impl RequestThrottler {
                                 }
                                 None => {
                                     if let Err(error) = wait_tx.send(()) {
-                                        println!("Error while sending! {}", error);
+                                        error!(%error, "Error while sending wake up!");
                                     }
                                 }
                             }
