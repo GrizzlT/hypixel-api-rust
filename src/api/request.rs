@@ -77,7 +77,7 @@ impl RequestHandler {
     /// // use reply ...
     /// # }
     /// ```
-    #[tracing::instrument(name = "queue_req", skip(self))]
+    #[cfg_attr(feature = "tracing", tracing::instrument(name = "queue_req", skip(self)))]
     pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> JoinHandle<Result<T, HypixelApiError>> {
         let url = format!("https://api.hypixel.net/{}", path);
         let api_key = self.api_key.to_hyphenated().to_string();
@@ -94,7 +94,7 @@ impl RequestHandler {
         })
     }
 
-    #[tracing::instrument(name = "try_send", level = "trace", skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(name = "try_send", level = "trace", skip_all))]
     async fn try_request(client: Client, url: String, api_key: String, throttler: Arc<Mutex<RequestThrottler>>) -> Result<Option<Response>, HypixelApiError> {
         let mut watcher = None;
         loop {

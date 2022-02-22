@@ -19,5 +19,8 @@ tokio = { version = "1.17.0", features = ["full"] }
 parking_lot = "0.12.0"
 reqwest = { version = "0.11.9", features = ["json"] }
 futures = "0.3.21"
-tracing = "0.1.31"
+tracing = { version = "0.1.31", optional = true }
 thiserror = "1.0.30"
+
+[features]
+default = []

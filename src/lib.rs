@@ -13,7 +13,8 @@
 //!
 //! View the [`RequestHandler`] documentation for more information on sending requests.
 
-#[macro_use]
+#[cfg_attr(feature = "tracing", macro_use)]
+#[cfg(feature = "tracing")]
 extern crate tracing;
 
 mod api;
