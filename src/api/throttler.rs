@@ -2,11 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 use parking_lot::Mutex;
 use reqwest::StatusCode;
-use anyhow::{Error, Result};
-use ignore_result::Ignore;
 use tokio::runtime;
 use tokio::sync::{mpsc, watch};
 use tokio::time::{sleep, Instant};
+use crate::api::errors::HypixelApiError;
 
 pub struct RequestThrottler {
     requests_left: u32,
@@ -49,14 +48,14 @@ impl RequestThrottler {
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn on_received(&mut self, status_code: StatusCode, time_before_reset: u64, requests_remaining: u32) -> Result<bool> {
+    pub fn on_received(&mut self, status_code: StatusCode, time_before_reset: u64, requests_remaining: u32) -> Result<bool, HypixelApiError> {
         match status_code {
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("Too many requests response!");
                 if !self.overflow_flagged {
                     self.overflow_flagged = true;
                     self.requests_left = 0;
-                    self.time_tx.try_send(Some(Duration::from_secs(time_before_reset + 2))).ignore();
+                    self.time_tx.try_send(Some(Duration::from_secs(time_before_reset + 2)))?;
                 }
                 Ok(false)
             }
@@ -64,12 +63,12 @@ impl RequestThrottler {
                 if !self.received_first {
                     self.received_first = true;
                     self.requests_left = requests_remaining;
-                    self.time_tx.try_send(Some(Duration::from_secs(time_before_reset + 2))).ignore();
-                    self.time_tx.try_send(None).ignore();
+                    self.time_tx.try_send(Some(Duration::from_secs(time_before_reset + 2)))?;
+                    self.time_tx.try_send(None)?;
                 }
                 Ok(true)
             }
-            code => return Err(Error::msg(format!("Unexpected response code: {}", code))),
+            code => return Err(HypixelApiError::UnexpectedResponseCode(code)),
         }
     }
 

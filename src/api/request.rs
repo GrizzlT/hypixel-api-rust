@@ -1,13 +1,13 @@
 use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;
-use anyhow::{Context, Result};
 use parking_lot::Mutex;
 use reqwest::{Client, Response};
 use reqwest::header::{AsHeaderName, HeaderMap};
 use serde::de::DeserializeOwned;
 use tokio::task::JoinHandle;
 use uuid::Uuid;
+use crate::api::errors::HypixelApiError;
 use crate::api::throttler::RequestThrottler;
 
 pub struct RequestHandler {
@@ -27,7 +27,7 @@ impl RequestHandler {
 
     /// Call this function from an async context!
     #[tracing::instrument(name = "queue_req", skip(self))]
-    pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> JoinHandle<Result<T>> {
+    pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> JoinHandle<Result<T, HypixelApiError>> {
         let url = format!("https://api.hypixel.net/{}", path);
         let api_key = self.api_key.to_hyphenated().to_string();
         let client = self.client.clone();
@@ -35,7 +35,7 @@ impl RequestHandler {
         tokio::spawn(async move {
             loop {
                 match RequestHandler::try_request(client.clone(), url.clone(), api_key.clone(), Arc::clone(&throttler)).await {
-                    Ok(Some(response)) => break response.json::<T>().await.with_context(|| format!("Error while deserializing response!")),
+                    Ok(Some(response)) => break response.json::<T>().await.map_err(|e| e.into()),
                     Err(error) => break Err(error),
                     _ => {}
                 }
@@ -44,7 +44,7 @@ impl RequestHandler {
     }
 
     #[tracing::instrument(name = "try_send", level = "trace", skip_all)]
-    async fn try_request(client: Client, url: String, api_key: String, throttler: Arc<Mutex<RequestThrottler>>) -> Result<Option<Response>> {
+    async fn try_request(client: Client, url: String, api_key: String, throttler: Arc<Mutex<RequestThrottler>>) -> Result<Option<Response>, HypixelApiError> {
         let mut watcher = None;
         loop {
             let ticket = {
@@ -65,7 +65,7 @@ impl RequestHandler {
 
         let response = client.get(&url)
             .header("API-Key", api_key)
-            .send().await.with_context(|| format!("Could not send request to {}", url))?;
+            .send().await?;
 
         let status_code = response.status();
         let headers = response.headers();
@@ -82,9 +82,9 @@ impl RequestHandler {
     }
 }
 
-fn get_from_headers<K: AsHeaderName, E: Error + Send + Sync + 'static, T: FromStr<Err=E> + Copy>(headers: &HeaderMap, name: K, default: T) -> Result<T> {
+fn get_from_headers<K: AsHeaderName, E: Error + Send + Sync + 'static, T: FromStr<Err=E> + Copy>(headers: &HeaderMap, name: K, default: T) -> Result<T, HypixelApiError> {
     headers.get(name)
         .map(|o| o.to_str())
-        .map(|o| o.map_or(Ok(default), |s| s.parse::<T>().with_context(|| format!("Invalid response from api!"))))
+        .map(|o| o.map_or(Ok(default), |s| s.parse::<T>().map_err(|_| HypixelApiError::IntFromStrError(String::from(s)))))
         .unwrap_or(Ok(default))
 }
