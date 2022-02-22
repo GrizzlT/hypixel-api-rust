@@ -21,6 +21,7 @@ mod api;
 
 pub use api::error;
 pub use api::reply;
+pub use api::util;
 
 pub use api::request::RequestHandler;
 pub use api::reply::*;
