@@ -17,7 +17,7 @@ pub struct RequestThrottler {
 
 impl RequestThrottler {
     /// Call this function from an async context
-    pub fn new() -> Arc<Mutex<Self>> {
+    pub(crate) fn new() -> Arc<Mutex<Self>> {
         let (notify_tx, notify_rx) = watch::channel(());
         let (time_tx, time_rx) = mpsc::channel(5);
         let handler = Arc::new(Mutex::new(RequestThrottler {
@@ -37,7 +37,7 @@ impl RequestThrottler {
         handler
     }
 
-    pub fn request_ticket(&mut self) -> (bool, watch::Receiver<()>) {
+    pub(crate) fn request_ticket(&mut self) -> (bool, watch::Receiver<()>) {
         let allow_pass = if self.requests_left > 0 {
             self.requests_left -= 1;
             true
@@ -48,7 +48,7 @@ impl RequestThrottler {
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn on_received(&mut self, status_code: StatusCode, time_before_reset: u64, requests_remaining: u32) -> Result<bool, HypixelApiError> {
+    pub(crate) fn on_received(&mut self, status_code: StatusCode, time_before_reset: u64, requests_remaining: u32) -> Result<bool, HypixelApiError> {
         match status_code {
             StatusCode::TOO_MANY_REQUESTS => {
                 warn!("Too many requests response!");
