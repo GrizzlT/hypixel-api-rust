@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::fmt::Formatter;
 use std::str::FromStr;
 use std::sync::Arc;
 use parking_lot::Mutex;
@@ -11,11 +12,19 @@ use crate::api::error::HypixelApiError;
 use crate::api::throttler::RequestThrottler;
 use crate::error::ErrorReply;
 
-#[derive(Debug)]
 pub struct RequestHandler {
     client: Client,
     api_key: Uuid,
     throttler: Arc<Mutex<RequestThrottler>>,
+}
+
+impl std::fmt::Debug for RequestHandler {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RequestHandler")
+            .field("client", &self.client)
+            .field("throttler", &self.throttler)
+            .finish()
+    }
 }
 
 impl RequestHandler {
