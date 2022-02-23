@@ -2,6 +2,9 @@ use std::ops::Deref;
 use serde::Deserialize;
 use uuid::Uuid;
 
+/// A data structure that maps to [`this endpoint`](https://api.hypixel.net/#tag/API/paths/~1key/get).
+///
+/// Response fields are captured in [`KeyData`].
 #[derive(Debug, Copy, Clone, Deserialize)]
 pub struct KeyReply {
     success: bool,
@@ -25,6 +28,11 @@ impl Deref for KeyReply {
     }
 }
 
+/// The response data corresponding to [`this endpoint`](https://api.hypixel.net/#tag/API/paths/~1key/get).
+///
+/// All fields are captured, except the repetition
+/// of the actual `ApiKey` used to send the request.
+/// (This being due to security reasons)
 #[derive(Debug, Copy, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyData {

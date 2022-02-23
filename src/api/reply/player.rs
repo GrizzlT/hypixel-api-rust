@@ -8,6 +8,9 @@ use crate::api::{ColorCodes, MonthlyPackageRank, PackageRank, StaffLevel};
 use crate::error::HypixelApiError;
 use crate::util::leveling;
 
+/// A data structure that maps to [`this endpoint`](https://api.hypixel.net/#tag/Player-Data).
+///
+/// Response fields are captured in [`PlayerData`].
 #[derive(Debug, Clone, Deserialize)]
 pub struct PlayerReply {
     success: bool,
@@ -31,6 +34,33 @@ impl PlayerReply {
     }
 }
 
+/// The response data corresponding to [`this endpoint`](https://api.hypixel.net/#tag/Player-Data).
+///
+/// ##### This struct implements some convenience functions to parse hypixel api data:
+///
+/// ### Player name
+/// The player name is spread out over multiple fields, use [`PlayerData::name`]
+/// to get a correct one (like the api does).
+///
+/// ### Network xp and lvl
+/// `Hypixel Network XP` and `Level` are stored in two separate fields in a specific format.\
+/// Use [`PlayerData::network_xp`] and [`PlayerData::network_level`] for these values.
+///
+/// ### Ranks
+/// Ranks are spread out over 5 fields!\
+/// Always use [`PlayerData::staff_level`] and [`PlayerData::package_rank`] to get
+/// the correct precedence. See [`this FAQ`](https://github.com/HypixelDev/PublicAPI/wiki/Common-Questions#how-do-i-get-a-players-rank-prefix)
+/// for more information.
+///
+/// ### Game stats
+/// All game stats are captured generically. To get a specific one,
+/// use [`PlayerData::stat_value`] or define a corresponding struct
+/// and use [`PlayerData::stat_json`].
+///
+/// ### Other properties
+/// You can get any property that the functions in this struct don't cover
+/// by using [`PlayerData::property_value`] or defining a corresponding struct
+/// and use [`PlayerData::property_json`].
 #[derive(Debug, Clone, Deserialize)]
 pub struct PlayerData {
     uuid: Uuid,
@@ -222,7 +252,7 @@ impl PlayerData {
     /// explicitly already, if present.
     ///
     /// See [`PlayerData::property_json`] for a possibly more convenient function.
-    pub fn property(&self, name: &str) -> Option<&Value> {
+    pub fn property_value(&self, name: &str) -> Option<&Value> {
         self.other.get(name)
     }
 

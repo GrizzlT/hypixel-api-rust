@@ -2,6 +2,9 @@ use std::ops::Deref;
 use serde::Deserialize;
 use uuid::Uuid;
 
+/// A data structure that maps to [`this endpoint`](https://api.hypixel.net/#tag/Player-Data/paths/~1status/get).
+///
+/// Response fields are captured in [`StatusData`]
 #[derive(Debug, Clone, Deserialize)]
 pub struct StatusReply {
     success: bool,
@@ -26,6 +29,7 @@ impl Deref for StatusReply {
     }
 }
 
+/// The response data corresponding to [`this endpoint`](https://api.hypixel.net/#tag/Player-Data/paths/~1status/get).
 #[derive(Debug, Clone, Deserialize)]
 pub struct StatusData {
     uuid: Uuid,
