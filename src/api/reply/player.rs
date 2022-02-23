@@ -1,13 +1,11 @@
-//! This module provides some examples of
-//! data structures that link to repsonses from
-//! Hypixel's Public API.
-
 use chrono::{DateTime, Local, TimeZone};
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
+use serde::de::DeserializeOwned;
 use uuid::Uuid;
 use crate::api::{ColorCodes, MonthlyPackageRank, PackageRank, StaffLevel};
+use crate::error::HypixelApiError;
 use crate::util::leveling;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -17,6 +15,13 @@ pub struct PlayerReply {
 }
 
 impl PlayerReply {
+    /// Returns whether the response was successful.
+    ///
+    /// This should always return true. (not guaranteed though)
+    pub fn success(&self) -> bool {
+        self.success
+    }
+
     /// Returns the data associated with the requested player.
     ///
     /// If this function returns [`Option::None`], the player isn't linked
@@ -49,6 +54,10 @@ pub struct PlayerData {
     rank_plus_color: Option<ColorCodes>,
     #[serde(rename = "monthlyRankColor")]
     superstar_tag_color: Option<ColorCodes>,
+    #[serde(rename = "buildTeam", default)]
+    build_team: bool,
+    #[serde(rename = "buildTeamAdmin", default)]
+    build_team_admin: bool,
     #[serde(rename = "firstLogin")]
     first_login: Option<u64>,
     #[serde(rename = "lastLogin")]
@@ -150,43 +159,81 @@ impl PlayerData {
     pub fn superstar_tag_color(&self) -> ColorCodes {
         self.superstar_tag_color.unwrap_or(ColorCodes::Gold)
     }
-}
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct StatusReply {
-    success: bool,
-    #[serde(flatten)]
-    data: StatusData,
-}
+    /// Returns the special rank of players if present.
+    ///
+    /// Defaults to [`StaffLevel::Normal`].
+    pub fn staff_level(&self) -> &StaffLevel {
+        self.staff_level.as_ref().unwrap_or(&StaffLevel::Normal)
+    }
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct StatusData {
-    uuid: Uuid,
-    session: SessionData,
-}
+    /// Returns the highest in precedence rank that the player has.
+    /// See [`this FAQ`](https://github.com/HypixelDev/PublicAPI/wiki/Common-Questions#how-do-i-get-a-players-rank-prefix).
+    ///
+    /// This function only considers values in [`PackageRank`].
+    pub fn package_rank(&self) -> PackageRank {
+        if self.is_plus_plus.filter(|v| *v != MonthlyPackageRank::None).is_some() {
+            PackageRank::MvpPlusPlus
+        } else if let Some(rank) = self.new_package_rank.filter(|v| *v != PackageRank::None) {
+            rank
+        } else if let Some(rank) = self.package_rank.filter(|v| *v != PackageRank::None) {
+            rank
+        } else {
+            PackageRank::None
+        }
+    }
 
-#[derive(Debug, Copy, Clone, Deserialize)]
-pub struct KeyReply {
-    success: bool,
-    record: KeyData,
-}
+    /// Returns true if the player has either a special [`StaffLevel`] rank
+    /// or a [`PackageRank`] rank.
+    ///
+    /// Defaults to false.
+    pub fn has_rank(&self) -> bool {
+        *self.staff_level() != StaffLevel::Normal || self.package_rank() != PackageRank::None
+    }
 
-#[derive(Debug, Copy, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct KeyData {
-    queries_in_past_min: i32,
-    key: Uuid,
-    owner: Uuid,
-    limit: i32,
-    total_queries: i32,
-}
+    /// Returns true if the player is part of the
+    /// [Hypixel Build Team](https://twitter.com/hypixelbuilders)
+    ///
+    /// Defaults to false.
+    pub fn on_build_team(&self) -> bool {
+        self.build_team || self.build_team_admin
+    }
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct SessionData {
-    online: bool,
-    /// TODO: chage into enum for easier game sorting
-    #[serde(rename = "gameType")]
-    game_type: Option<String>,
-    mode: Option<String>,
-    map: Option<String>,
+    /// Returns the json entry corresponding to `name`, if present.
+    ///
+    /// See [`PlayerData::stat_json`] for a possibly more convenient function.
+    pub fn stat_value(&self, name: &str) -> Option<&Value> {
+        self.stats.as_ref().map(|m| m.get(name)).flatten()
+    }
+
+    /// Returns the json entry corresponding to `name`, if present,
+    /// and automatically deserialized into `T`.
+    ///
+    /// # Note
+    /// This function **clones** the data in order to deserialize it. In the future this
+    /// could be updated to automatically deserialize stable games.
+    pub fn stat_json<T: DeserializeOwned>(&self, name: &str) -> Option<Result<T, HypixelApiError>> {
+        self.stats.as_ref().map(|m| m.get(name))
+            .flatten()
+            .map(|v| serde_json::from_value(v.clone()).map_err(|e| e.into()))
+    }
+
+    /// Returns any other property this struct does not capture
+    /// explicitly already, if present.
+    ///
+    /// See [`PlayerData::property_json`] for a possibly more convenient function.
+    pub fn property(&self, name: &str) -> Option<&Value> {
+        self.other.get(name)
+    }
+
+    /// Returns any other property this struct does not capture
+    /// explicitly already, if present, and automatically deserializes
+    /// it into `T`.
+    /// # Note
+    /// This function **clones** the data in order to deserialize it. For maximum efficiency,
+    /// always consider contributing stable fields to the repository, thank you!
+    pub fn property_json<T: DeserializeOwned>(&self, name: &str) -> Option<Result<T, HypixelApiError>> {
+        self.other.get(name)
+            .map(|v| serde_json::from_value(v.clone()).map_err(|e| e.into()))
+    }
 }

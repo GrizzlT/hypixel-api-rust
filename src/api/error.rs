@@ -1,3 +1,5 @@
+//! Error type(s) used throughout this library.
+
 use std::time::Duration;
 
 use reqwest::StatusCode;
@@ -24,6 +26,11 @@ pub enum HypixelApiError {
     TokioReceive {
         #[from]
         source: tokio::sync::watch::error::RecvError,
+    },
+    #[error("Error while deserializing from json")]
+    SerdeJsonError {
+        #[from]
+        source: serde_json::Error,
     }
 }
 
