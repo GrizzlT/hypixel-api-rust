@@ -7,6 +7,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
+use crate::api::{ColorCodes, MonthlyPackageRank, PackageRank, StaffLevel};
 use crate::util::leveling;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -55,12 +56,14 @@ pub struct PlayerData {
     #[serde(rename = "lastLogout")]
     last_logout: Option<u64>,
     #[serde(rename = "networkExp", default)]
-    network_exp: u64,
+    network_exp: f64,
     #[serde(rename = "networkLevel", default)]
-    network_lvl: u64,
+    network_lvl: f64,
     #[serde(default)]
     karma: u64,
     stats: Option<HashMap<String, Value>>,
+    #[serde(flatten)]
+    other: HashMap<String, Value>,
 }
 
 impl PlayerData {
@@ -102,13 +105,13 @@ impl PlayerData {
     ///
     /// If no experience or level field was included, `0` will be used instead.
     pub fn network_xp(&self) -> u64 {
-        self.network_exp + leveling::network::total_xp_to_full_level((self.network_lvl + 1) as f64) as u64
+        (self.network_exp + leveling::network::total_xp_to_full_level(self.network_lvl + 1.0)) as u64
     }
 
     /// Returns the player's precise network level, including their progress to the next level.
     pub fn network_level(&self) -> f64 {
         // use direct values for precision
-        let xp = self.network_exp as f64 + leveling::network::total_xp_to_full_level((self.network_lvl + 1) as f64);
+        let xp = self.network_exp + leveling::network::total_xp_to_full_level(self.network_lvl + 1.0);
         leveling::network::exact_level(xp)
     }
 
@@ -178,13 +181,6 @@ pub struct KeyData {
     total_queries: i32,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-enum MonthlyPackageRank {
-    None,
-    Superstar,
-}
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct SessionData {
     online: bool,
@@ -193,46 +189,4 @@ pub struct SessionData {
     game_type: Option<String>,
     mode: Option<String>,
     map: Option<String>,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum StaffLevel {
-    Normal,
-    Helper,
-    Moderator,
-    Admin,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum PackageRank {
-    None,
-    Vip,
-    VipPlus,
-    Mvp,
-    MvpPlus,
-    MvpPlusPlus,
-}
-
-/// This corresponds to [this wiki](https://minecraft.fandom.com/wiki/Formatting_codes#Color_codes).
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum ColorCodes {
-    Black,
-    DarkBlue,
-    DarkGreen,
-    DarkAqua,
-    DarkRed,
-    DarkPurple,
-    Gold,
-    Gray,
-    DarkGray,
-    Blue,
-    Green,
-    Aqua,
-    Red,
-    LightPurple,
-    Yellow,
-    White,
 }

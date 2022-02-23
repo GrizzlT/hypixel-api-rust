@@ -21,6 +21,7 @@ reqwest = { version = "0.11.9", features = ["json"] }
 futures = "0.3.21"
 tracing = { version = "0.1.31", optional = true }
 thiserror = "1.0.30"
+convert_case = "0.5.0"
 
 [features]
 default = []

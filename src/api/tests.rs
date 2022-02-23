@@ -72,12 +72,13 @@ fn test_bulk() {
 }
 
 #[test]
-fn test_bed_bed() {
+//#[ignore]
+fn test_player_data() {
     tokio::runtime::Runtime::new().unwrap()
         .block_on(async move {
             let request_handler = RequestHandler::new(Uuid::from_str(env!("HYPIXEL_KEY")).unwrap());
 
-            let reply = request_handler.request::<PlayerReply>("player?uuid=232b2c37-4d68-4086-a7ce-67d0cadcc7f9").await.unwrap();
+            let reply = request_handler.request::<PlayerReply>("player?uuid=ec174daf-b5a5-4ea1-adc6-35a7f9fc4a60").await.unwrap();
             match reply {
                 Ok(reply) => println!("Response: {:?}", reply),
                 Err(error) => println!("Encoutered error: {}, source: {:?}", error, error.source()),
