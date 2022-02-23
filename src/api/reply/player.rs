@@ -25,7 +25,7 @@ impl PlayerReply {
     /// Returns the data associated with the requested player.
     ///
     /// If this function returns [`Option::None`], the player isn't linked
-    /// to any stats on hypixel. (And thus can be a nick)
+    /// to any data on hypixel. (And thus can be a nick)
     pub fn player(&self) -> Option<&PlayerData> {
         self.player.as_ref()
     }
