@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = [ "GrizzlT" ]
 license = "MIT OR Apache-2.0"
+readme = "README.md"
 description = "Generic wrapper around the hypixel api (automatic rate-limiting on client-side)"
 repository = "https://github.com/GrizzlT/hypixel-api-rust"
 keywords = [ "hypixel", "api", "wrapper", "rate-limiting", "PublicAPI" ]
