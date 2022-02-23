@@ -24,7 +24,9 @@ thiserror = "1.0.30"
 convert_case = "0.5.0"
 
 [features]
-default = []
+default = [ "reply" ]
+reply = [ "util" ]
+util = []
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "--html-in-header", "./src/docs-header.html" ]

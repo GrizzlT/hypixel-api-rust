@@ -1,9 +1,11 @@
 pub(crate) mod throttler;
+#[cfg(feature = "reply")]
 pub mod reply;
 pub(crate) mod request;
 #[macro_use]
 pub(crate) mod macros;
 pub mod error;
+#[cfg(feature = "util")]
 pub mod util;
 mod tests;
 
