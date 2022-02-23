@@ -64,6 +64,8 @@ impl RequestHandler {
     /// `path` should be a relative path to the API (without leading `/`), such as `"key"`
     /// or `"status?uuid=..."`. See the [API](https://api.hypixel.net/).
     ///
+    /// If `authenticated` is `true` then the API key will be sent along as a header.
+    ///
     /// # Errors
     ///
     /// If any part of the execution process fails, a [`HypixelApiError`] will be returned.
@@ -79,7 +81,7 @@ impl RequestHandler {
     /// # async fn main() {
     /// let api_key = Uuid::from_str(env!("HYPIXEL_API_KEY")).unwrap();
     /// let request_handler = RequestHandler::new(api_key);
-    /// let request1 = request_handler.request::<StatusReply>("status?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5");
+    /// let request1 = request_handler.request::<StatusReply>("status?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5", true);
     ///
     /// // send more requests ...
     ///

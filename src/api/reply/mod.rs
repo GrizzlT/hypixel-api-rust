@@ -1,6 +1,5 @@
-//! This module provides ready-to-use examples of
-//! data structures that link to responses from
-//! Hypixel's Public API.
+//! This module provides ready-to-use data structures that
+//! link to responses from Hypixel's Public API.
 
 mod player;
 mod status;

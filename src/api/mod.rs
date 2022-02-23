@@ -66,7 +66,7 @@ pub enum PackageRank {
 }
 display_enum_with_case!(PackageRank, ScreamingSnake);
 
-/// This corresponds to [this wiki](https://minecraft.fandom.com/wiki/Formatting_codes#Color_codes).
+/// This corresponds to the table on [this wiki](https://minecraft.fandom.com/wiki/Formatting_codes#Color_codes).
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ColorCodes {
