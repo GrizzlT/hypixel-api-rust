@@ -88,14 +88,18 @@ impl RequestHandler {
     /// # }
     /// ```
     #[cfg_attr(feature = "tracing", tracing::instrument(name = "queue_req", skip(self)))]
-    pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> JoinHandle<Result<T, HypixelApiError>> {
+    pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str, authenticated: bool) -> JoinHandle<Result<T, HypixelApiError>> {
         let url = format!("https://api.hypixel.net/{}", path);
         let api_key = self.api_key.to_hyphenated().to_string();
         let client = self.client.clone();
         let throttler = Arc::clone(&self.throttler);
         tokio::spawn(async move {
+            let client = client;
+            let url = url;
+            let api_key = api_key;
+            let throttler = throttler;
             loop {
-                match RequestHandler::try_request(client.clone(), url.clone(), api_key.clone(), Arc::clone(&throttler)).await {
+                match RequestHandler::try_request(&client, &url, &api_key, &throttler, authenticated).await {
                     Ok(Some(response)) => break response.json::<T>().await.map_err(|e| e.into()),
                     Err(error) => break Err(error),
                     _ => {}
@@ -105,7 +109,7 @@ impl RequestHandler {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(name = "try_send", level = "trace", skip_all))]
-    async fn try_request(client: Client, url: String, api_key: String, throttler: Arc<Mutex<RequestThrottler>>) -> Result<Option<Response>, HypixelApiError> {
+    async fn try_request(client: &Client, url: &str, api_key: &str, throttler: &Arc<Mutex<RequestThrottler>>, authenticated: bool) -> Result<Option<Response>, HypixelApiError> {
         let mut watcher = None;
         loop {
             let ticket = {
@@ -124,9 +128,11 @@ impl RequestHandler {
             }
         }?;
 
-        let response = client.get(&url)
-            .header("API-Key", api_key)
-            .send().await?;
+        let mut response = client.get(url);
+        if authenticated {
+            response = response.header("API-Key", api_key);
+        }
+        let response = response.send().await?;
 
         let status_code = response.status();
         let headers = response.headers();
