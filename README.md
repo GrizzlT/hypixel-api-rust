@@ -36,7 +36,7 @@ the API and thus by consequence guarantee to be deserializable into a correspond
 
 Currently, many example response data structures are unimplemented. This does not impact
 this crate's ability to still query that data. Simply define your own  data structure and
-use it with [`RequestHandler`] like usual. You could even replace all pre-made data structures
+use it with `RequestHandler` like usual. You could even replace all pre-made data structures
 and go fully custom. (Feel free to contribute to this repository!!)
 
 See the documentation for more examples.
