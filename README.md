@@ -1,5 +1,6 @@
 # hypixel-api-rust
 [![Latest Version](https://img.shields.io/crates/v/hypixel_api)](https://crates.io/crates/hypixel_api)
+
 This is a Rust implementation of the [Hypixel API](https://github.com/HypixelDev/PublicAPI).
 
 Hypixel's Public API imposes a default limit of 120 requests/minute. This crate 
