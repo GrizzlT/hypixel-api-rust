@@ -92,7 +92,7 @@ impl RequestHandler {
     #[cfg_attr(feature = "tracing", tracing::instrument(name = "queue_req", skip(self)))]
     pub fn request<T: DeserializeOwned + Send + 'static>(&self, path: &str, authenticated: bool) -> JoinHandle<Result<T, HypixelApiError>> {
         let url = format!("https://api.hypixel.net/{}", path);
-        let api_key = self.api_key.to_hyphenated().to_string();
+        let api_key = self.api_key.hyphenated().to_string();
         let client = self.client.clone();
         let throttler = Arc::clone(&self.throttler);
         tokio::spawn(async move {

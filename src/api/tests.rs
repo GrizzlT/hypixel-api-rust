@@ -58,7 +58,7 @@ fn test_bulk() {
             // status?uuid=ec174daf-b5a5-4ea1-adc6-35a7f9fc4a60
             let mut future_pool = FuturesUnordered::new();
             for i in 0..300 {
-                let future = request_handler.request::<KeyReply>("key");
+                let future = request_handler.request::<KeyReply>("key", true);
                 future_pool.push(async move {
                     (i, future.await)
                 });
@@ -79,7 +79,7 @@ fn test_player_data() {
             let request_handler = RequestHandler::new(Uuid::from_str(env!("HYPIXEL_KEY")).unwrap());
 
             // let reply = request_handler.request::<PlayerReply>("player?uuid=ec174daf-b5a5-4ea1-adc6-35a7f9fc4a60").await.unwrap();
-            let reply = request_handler.request::<KeyReply>("key").await.unwrap();
+            let reply = request_handler.request::<PlayerReply>("key", true).await.unwrap();
             match reply {
                 Ok(reply) => println!("Response: {:?}", reply),
                 Err(error) => println!("Encoutered error: {}, source: {:?}", error, error.source()),
